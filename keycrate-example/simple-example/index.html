@@ -5,11 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Keycrate – Simple Demo</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -20,123 +16,56 @@
             padding: 20px;
         }
         .container {
-            background: white;
-            border-radius: 12px;
+            background: white; border-radius: 12px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            padding: 40px;
-            max-width: 500px;
-            width: 100%;
+            padding: 40px; max-width: 500px; width: 100%;
         }
-        h1 {
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 28px;
-            text-align: center;
-        }
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #f0f0f0;
-        }
+        h1 { color: #333; margin-bottom: 30px; font-size: 28px; text-align: center; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 30px; border-bottom: 2px solid #f0f0f0; }
         .tab-btn {
-            flex: 1;
-            padding: 12px 20px;
-            background: none;
-            border: none;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            color: #999;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s;
+            flex: 1; padding: 12px 20px; background: none; border: none;
+            font-size: 16px; font-weight: 600; cursor: pointer; color: #999;
+            border-bottom: 3px solid transparent; transition: all 0.3s;
         }
-        .tab-btn.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
+        .tab-btn.active { color: #667eea; border-bottom-color: #667eea; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #333; font-weight: 500; }
+        input, select {
+            width: 100%; padding: 12px; border: 2px solid #e0e0e0;
+            border-radius: 6px; font-size: 16px; transition: border-color 0.3s;
         }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
-        }
-        input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-        input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
+        input:focus, select:focus { outline: none; border-color: #667eea; }
         button {
-            width: 100%;
-            padding: 12px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s;
+            width: 100%; padding: 12px; background: #667eea; color: white;
+            border: none; border-radius: 6px; font-size: 16px; font-weight: 600;
+            cursor: pointer; transition: background 0.3s;
         }
-        button:hover {
-            background: #5568d3;
-        }
+        button:hover { background: #5568d3; }
         .message {
-            margin-top: 20px;
-            padding: 16px;
-            border-radius: 6px;
-            text-align: center;
-            font-weight: 500;
-            display: none;
+            margin-top: 20px; padding: 16px; border-radius: 6px;
+            text-align: center; font-weight: 500; display: none;
         }
-        .message.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-            display: block;
-        }
-        .message.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-            display: block;
-        }
-        .loading {
-            opacity: 0.7;
-            pointer-events: none;
-        }
+        .message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; display: block; }
+        .message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; display: block; }
+        .loading { opacity: 0.7; pointer-events: none; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔐 Keycrate</h1>
+        <h1>Keycrate</h1>
 
         <div class="tabs">
             <button class="tab-btn active" data-tab="authenticate">Authenticate</button>
             <button class="tab-btn" data-tab="register">Register</button>
         </div>
 
-        <!-- Authenticate Tab -->
+        <!-- Authenticate -->
         <div id="authenticate" class="tab-content active">
             <div class="form-group">
-                <label>Authentication Method</label>
-                <select id="authMethod" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 16px;">
+                <label>Method</label>
+                <select id="authMethod">
                     <option value="license">License Key</option>
                     <option value="credentials">Username/Password</option>
                 </select>
@@ -145,18 +74,18 @@
             <div id="licenseFields">
                 <div class="form-group">
                     <label for="licenseKey">License Key</label>
-                    <input type="text" id="licenseKey" placeholder="Enter your license key">
+                    <input type="text" id="licenseKey" placeholder="Enter license">
                 </div>
             </div>
 
             <div id="credentialFields" style="display: none;">
                 <div class="form-group">
                     <label for="authUsername">Username</label>
-                    <input type="text" id="authUsername" placeholder="Enter username">
+                    <input type="text" id="authUsername" placeholder="Username">
                 </div>
                 <div class="form-group">
                     <label for="authPassword">Password</label>
-                    <input type="password" id="authPassword" placeholder="Enter password">
+                    <input type="password" id="authPassword" placeholder="Password">
                 </div>
             </div>
 
@@ -164,19 +93,19 @@
             <div id="authMessage" class="message"></div>
         </div>
 
-        <!-- Register Tab -->
+        <!-- Register -->
         <div id="register" class="tab-content">
             <div class="form-group">
                 <label for="regLicense">License Key</label>
-                <input type="text" id="regLicense" placeholder="License to bind to">
+                <input type="text" id="regLicense" placeholder="License to bind">
             </div>
             <div class="form-group">
                 <label for="regUsername">Username</label>
-                <input type="text" id="regUsername" placeholder="Choose a username">
+                <input type="text" id="regUsername" placeholder="Choose username">
             </div>
             <div class="form-group">
                 <label for="regPassword">Password</label>
-                <input type="password" id="regPassword" placeholder="Choose a password">
+                <input type="password" id="regPassword" placeholder="Choose password">
             </div>
             <button onclick="register()">Register</button>
             <div id="regMessage" class="message"></div>
@@ -190,97 +119,78 @@
         // Tab switching
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                const tabName = btn.dataset.tab;
+                const tab = btn.dataset.tab;
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                 btn.classList.add('active');
-                document.getElementById(tabName).classList.add('active');
+                document.getElementById(tab).classList.add('active');
             });
         });
 
-        // Auth method switcher
+        // Auth method
         document.getElementById('authMethod').addEventListener('change', (e) => {
-            if (e.target.value === 'license') {
-                document.getElementById('licenseFields').style.display = 'block';
-                document.getElementById('credentialFields').style.display = 'none';
-            } else {
-                document.getElementById('licenseFields').style.display = 'none';
-                document.getElementById('credentialFields').style.display = 'block';
-            }
+            document.getElementById('licenseFields').style.display = e.target.value === 'license' ? 'block' : 'none';
+            document.getElementById('credentialFields').style.display = e.target.value === 'credentials' ? 'block' : 'none';
         });
 
         async function makeRequest(endpoint, payload) {
             try {
                 const response = await fetch(`${API_HOST}${endpoint}`, {
                     method: 'POST',
+                    mode: 'cors',
+                    credentials: 'omit',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        app_id: APP_ID,
-                        ...payload
-                    })
+                    body: JSON.stringify({ app_id: APP_ID, ...payload })
                 });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 return await response.json();
-            } catch (error) {
-                return {
-                    success: false,
-                    message: `Request failed: ${error.message}`
-                };
+            } catch (err) {
+                return { success: false, message: `Request failed: ${err.message}` };
             }
         }
 
         async function authenticate() {
             const method = document.getElementById('authMethod').value;
-            const messageEl = document.getElementById('authMessage');
-            const button = event.target;
+            const msg = document.getElementById('authMessage');
+            const btn = event.target;
+            btn.classList.add('loading');
 
-            button.classList.add('loading');
             let payload = {};
-
             if (method === 'license') {
-                const key = document.getElementById('licenseKey').value;
-                if (!key) {
-                    showMessage(messageEl, 'Please enter a license key', 'error');
-                    button.classList.remove('loading');
-                    return;
-                }
-                payload = { license: key };
+                const key = document.getElementById('licenseKey').value.trim();
+                if (!key) { showMessage(msg, 'Enter license key', 'error'); btn.classList.remove('loading'); return; }
+                payload.license = key;
             } else {
-                const username = document.getElementById('authUsername').value;
-                const password = document.getElementById('authPassword').value;
-                if (!username || !password) {
-                    showMessage(messageEl, 'Please enter both username and password', 'error');
-                    button.classList.remove('loading');
-                    return;
-                }
-                payload = { username, password };
+                const u = document.getElementById('authUsername').value.trim();
+                const p = document.getElementById('authPassword').value;
+                if (!u || !p) { showMessage(msg, 'Fill all fields', 'error'); btn.classList.remove('loading'); return; }
+                payload.username = u; payload.password = p;
             }
 
-            const result = await makeRequest('/auth', payload);
-            showMessage(messageEl, result.message, result.success ? 'success' : 'error');
-            button.classList.remove('loading');
+            const res = await makeRequest('/auth', payload);
+            showMessage(msg, res.message, res.success ? 'success' : 'error');
+            btn.classList.remove('loading');
         }
 
         async function register() {
-            const license = document.getElementById('regLicense').value;
-            const username = document.getElementById('regUsername').value;
-            const password = document.getElementById('regPassword').value;
-            const messageEl = document.getElementById('regMessage');
-            const button = event.target;
+            const l = document.getElementById('regLicense').value.trim();
+            const u = document.getElementById('regUsername').value.trim();
+            const p = document.getElementById('regPassword').value;
+            const msg = document.getElementById('regMessage');
+            const btn = event.target;
 
-            if (!license || !username || !password) {
-                showMessage(messageEl, 'Please fill in all fields', 'error');
-                return;
-            }
+            if (!l || !u || !p) { showMessage(msg, 'Fill all fields', 'error'); return; }
+            btn.classList.add('loading');
 
-            button.classList.add('loading');
-            const result = await makeRequest('/register', { license, username, password });
-            showMessage(messageEl, result.message, result.success ? 'success' : 'error');
-            button.classList.remove('loading');
+            const res = await makeRequest('/register', { license: l, username: u, password: p });
+            showMessage(msg, res.message, res.success ? 'success' : 'error');
+            btn.classList.remove('loading');
         }
 
-        function showMessage(element, text, type) {
-            element.textContent = text;
-            element.className = `message ${type}`;
+        function showMessage(el, text, type) {
+            el.textContent = text;
+            el.className = `message ${type}`;
         }
     </script>
 </body>

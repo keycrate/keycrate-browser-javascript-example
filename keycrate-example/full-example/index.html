@@ -61,7 +61,7 @@
             color: #333;
             font-weight: 500;
         }
-        input {
+        input, select {
             width: 100%;
             padding: 12px;
             border: 2px solid #e0e0e0;
@@ -69,7 +69,7 @@
             font-size: 16px;
             transition: border-color 0.3s;
         }
-        input:focus {
+        input:focus, select:focus {
             outline: none;
             border-color: #667eea;
         }
@@ -85,8 +85,12 @@
             cursor: pointer;
             transition: background 0.3s;
         }
-        button:hover {
+        button:hover:not(:disabled) {
             background: #5568d3;
+        }
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
         }
         .message {
             margin-top: 20px;
@@ -116,10 +120,6 @@
         .menu button {
             flex: 1;
         }
-        .loading {
-            opacity: 0.7;
-            pointer-events: none;
-        }
     </style>
 </head>
 <body>
@@ -135,7 +135,7 @@
 
             <div class="form-group">
                 <label>Login Method</label>
-                <select id="loginMethod" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 16px;">
+                <select id="loginMethod">
                     <option value="license">License Key</option>
                     <option value="credentials">Username/Password</option>
                 </select>
@@ -159,7 +159,7 @@
                 </div>
             </div>
 
-            <button onclick="login()">Login</button>
+            <button id="loginBtn">Login</button>
             <div id="loginMessage" class="message"></div>
         </div>
 
@@ -171,8 +171,8 @@
             </div>
 
             <div class="menu">
-                <button onclick="showRegisterSection()">Register Credentials</button>
-                <button onclick="logout()">Logout</button>
+                <button id="registerNavBtn">Register Credentials</button>
+                <button id="logoutBtn">Logout</button>
             </div>
         </div>
 
@@ -186,21 +186,20 @@
                 <label for="regPassword">Password</label>
                 <input type="password" id="regPassword" placeholder="Choose a password">
             </div>
-            <button onclick="register()">Register</button>
+            <button id="regBtn">Register</button>
             <div id="regMessage" class="message"></div>
-            <button onclick="showMenuSection()" style="background: #999; margin-top: 10px;">Back</button>
+            <button id="backBtn" style="background: #999; margin-top: 10px;">Back</button>
         </div>
     </div>
 
     <script>
         const API_HOST = 'https://api.keycrate.dev';
-        const APP_ID = 'YOUR_APP_ID';
+        const APP_ID = 'YOUR_APP_ID'; // ⚠️ UPDATE THIS
         let currentLicense = null;
         let currentHWID = null;
 
         // Initialize HWID - simple browser fingerprint
         function getHWID() {
-            // For browser, create a simple fingerprint from navigator data
             const fingerprint = [
                 navigator.userAgent,
                 navigator.language,
@@ -208,12 +207,11 @@
                 screen.width + 'x' + screen.height
             ].join('|');
 
-            // Simple hash function (not crypto-grade but works for browser demo)
             let hash = 0;
             for (let i = 0; i < fingerprint.length; i++) {
                 const char = fingerprint.charCodeAt(i);
                 hash = ((hash << 5) - hash) + char;
-                hash = hash & hash; // Convert to 32-bit integer
+                hash = hash & hash;
             }
             return Math.abs(hash).toString(16).substring(0, 16);
         }
@@ -236,47 +234,125 @@
             }
         });
 
+        /**
+         * Enhanced request handler with better error parsing
+         */
         async function makeRequest(endpoint, payload) {
+            console.log('Making request to:', endpoint);
+            
             try {
                 const response = await fetch(`${API_HOST}${endpoint}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
+                    mode: 'cors',
                     body: JSON.stringify({
                         app_id: APP_ID,
                         ...payload
                     })
                 });
-                return await response.json();
-            } catch (error) {
-                return {
+
+                console.log('Response status:', response.status);
+
+                // Try to parse response body regardless of status
+                let responseBody;
+                try {
+                    responseBody = await response.json();
+                    console.log('Response body:', responseBody);
+                } catch (parseError) {
+                    console.error('Failed to parse response:', parseError);
+                    // If response isn't JSON, return generic error
+                    return {
+                        success: false,
+                        message: `Server error (${response.status}): Unable to parse response`
+                    };
+                }
+
+                // If API returned a structured error response, use its message
+                if (!response.ok && responseBody.message) {
+                    console.log('Returning API error:', responseBody.message);
+                    return responseBody;
+                }
+
+                // If response was successful, return the body
+                if (response.ok) {
+                    console.log('Success response');
+                    return responseBody;
+                }
+
+                // Fallback for unexpected HTTP errors
+                const fallback = {
                     success: false,
-                    message: `Request failed: ${error.message}`
+                    message: responseBody.message || `HTTP ${response.status}: ${response.statusText}`
                 };
+                console.log('Returning fallback:', fallback);
+                return fallback;
+
+            } catch (error) {
+                // Network errors, CORS errors, etc.
+                console.error('Caught error:', error.name, error.message);
+                
+                const errorResponse = {
+                    success: false,
+                    message: 'Network error: Unable to reach the server. Check your connection and CORS configuration.'
+                };
+                
+                console.log('Returning error response:', errorResponse);
+                return errorResponse;
             }
         }
 
-        async function login() {
+        /**
+         * Friendly error message mapper
+         */
+        function getErrorMessage(apiMessage) {
+            const messageMap = {
+                'LICENSE_NOT_FOUND': 'License key not found',
+                'INVALID_USERNAME_OR_PASSWORD': 'Invalid username or password',
+                'HWID_NOT_PROVIDED': 'HWID is required but was not provided',
+                'HWID_MISMATCH': 'This device is not registered with this license',
+                'DEVICE_ALREADY_REGISTERED_WITH_OTHER_LICENSE': 'This device is already registered with another license',
+                'LICENSE_NOT_ACTIVE': 'License is not active',
+                'LICENSE_EXPIRED': 'License has expired',
+                'APPLICATION_NOT_FOUND': 'Application configuration error',
+                'APPLICATION_NOT_ACTIVE': 'Application is not currently active',
+                'TEAM_ERROR': 'Team error or subscription expired',
+                'SUBSCRIPTION_ERROR': 'Subscription error',
+                'SUBSCRIPTION_NOT_ACTIVE': 'Subscription is not active',
+                'COUNTRY_BLACKLISTED': 'Your country is not authorized',
+                'ASN_BLACKLISTED': 'Your network is not authorized',
+                'IP_BLACKLISTED': 'Your IP is not authorized',
+                'HWID_BLACKLISTED': 'Your device is blacklisted'
+            };
+
+            return messageMap[apiMessage] || apiMessage;
+        }
+
+        document.getElementById('loginBtn').addEventListener('click', async function() {
             const method = document.getElementById('loginMethod').value;
             const messageEl = document.getElementById('loginMessage');
-            const button = event.target;
+            const button = this;
 
-            button.classList.add('loading');
+            button.disabled = true;
+            messageEl.style.display = 'none';
+            
             let payload = { hwid: currentHWID };
 
             if (method === 'license') {
-                const key = document.getElementById('loginLicense').value;
+                const key = document.getElementById('loginLicense').value.trim();
                 if (!key) {
                     showMessage(messageEl, 'Please enter a license key', 'error');
-                    button.classList.remove('loading');
+                    button.disabled = false;
                     return;
                 }
                 payload.license = key;
             } else {
-                const username = document.getElementById('loginUsername').value;
+                const username = document.getElementById('loginUsername').value.trim();
                 const password = document.getElementById('loginPassword').value;
                 if (!username || !password) {
                     showMessage(messageEl, 'Please enter both username and password', 'error');
-                    button.classList.remove('loading');
+                    button.disabled = false;
                     return;
                 }
                 payload.username = username;
@@ -285,29 +361,39 @@
 
             const result = await makeRequest('/auth', payload);
             
-            if (result.success) {
+            console.log('Login result:', result);
+            
+            if (result && result.success) {
                 currentLicense = result.data?.key;
-                showMessage(messageEl, result.message, 'success');
+                showMessage(messageEl, 'Login successful!', 'success');
                 setTimeout(() => showMenuSection(), 1500);
+            } else if (result && result.message) {
+                // Use friendly error message
+                const friendlyMessage = getErrorMessage(result.message);
+                console.log('Showing error:', friendlyMessage);
+                showMessage(messageEl, friendlyMessage, 'error');
             } else {
-                showMessage(messageEl, result.message, 'error');
+                console.log('Unknown error result:', result);
+                showMessage(messageEl, 'An unknown error occurred', 'error');
             }
             
-            button.classList.remove('loading');
-        }
+            button.disabled = false;
+        });
 
-        async function register() {
-            const username = document.getElementById('regUsername').value;
+        document.getElementById('regBtn').addEventListener('click', async function() {
+            const username = document.getElementById('regUsername').value.trim();
             const password = document.getElementById('regPassword').value;
             const messageEl = document.getElementById('regMessage');
-            const button = event.target;
+            const button = this;
 
             if (!username || !password) {
                 showMessage(messageEl, 'Please fill in all fields', 'error');
                 return;
             }
 
-            button.classList.add('loading');
+            button.disabled = true;
+            messageEl.style.display = 'none';
+
             const result = await makeRequest('/register', {
                 license: currentLicense,
                 username,
@@ -315,8 +401,12 @@
             });
             
             showMessage(messageEl, result.message, result.success ? 'success' : 'error');
-            button.classList.remove('loading');
-        }
+            button.disabled = false;
+        });
+
+        document.getElementById('registerNavBtn').addEventListener('click', showRegisterSection);
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+        document.getElementById('backBtn').addEventListener('click', showMenuSection);
 
         function showSection(sectionId) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -345,8 +435,11 @@
         }
 
         function showMessage(element, text, type) {
+            console.log('showMessage called:', { text, type, element });
             element.textContent = text;
             element.className = `message ${type}`;
+            element.style.display = 'block'; // Force display
+            console.log('Message element now:', element.className, element.style.display);
         }
     </script>
 </body>
